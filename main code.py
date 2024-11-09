@@ -390,9 +390,22 @@ class Order:
         return order_items
 
     def get_sorted_order(self):
-        #it sorts the items given first the aisle, then the y location, adn finally for the location x
-        sorted_order = sorted(self.order_items, key=lambda item: (
-        item.location[0].aisle, item.location[0].get_location_y(), item.location[0].get_location_x()))
+        #it sorts the items given first the aisle, then the x location, adn finally for the location y
+        #as so we can implement the return policy because the path calculation will follow the order of the items in each order
+        sorted_order : [OrderItem] = sorted(self.order_items, key=lambda item: (
+        item.location[0].aisle, item.location[0].get_location_x(), item.location[0].get_location_y()))
+        #now i'm inverting the position of all the orders in the right aisle 
+        #in order to get the natural order of items for the return path inside the rack
+        for i in range(4, 25, 5):
+            #retrieves one aisle (to be inverted) at the time and inverts it
+            inverted_aisle = [order for order in sorted_order if order.location[0].get_location_x() == i][::-1]
+            #if we actually have some elements in that aisle, 
+            #substitute the subarray of OrderItem with the inverted array
+            if inverted_aisle.count != 0:
+                for id_x, orderItem in enumerate(sorted_order):
+                    if orderItem.location[0].get_location_x() == i:
+                        sorted_order[id_x : id_x + inverted_aisle.count] = inverted_aisle
+                        break
         self.order_items = sorted_order
         #returns an sorted order, does not modify actual
         return self
@@ -401,7 +414,7 @@ class Order:
     def set_sorted_order(self):
         #this rewrites the order
         self.order_items = sorted(self.order_items, key=lambda item: (
-        item.location[0].aisle, item.location[0].get_location_y(), item.location[0].get_location_x()))
+        item.location[0].aisle, item.location[0].get_location_x(), item.location[0].get_location_y()))
 
     def order_pop(self, index=0):
         #it allows to take out an item 
@@ -988,7 +1001,7 @@ from itertools import combinations
 
 # modify the following two variable to set running features
 batching_mode = True
-typology = 'original'
+typology = 'horizontal' #could be horizontal, vertical, oblique
 
 o_warehouse.reshuffle(typology)
 if typology == 'original':
