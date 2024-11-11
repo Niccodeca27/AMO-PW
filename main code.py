@@ -397,8 +397,10 @@ class Order:
         #returns an sorted order, does not modify actual
         return self
 
+    #used for return picking policy
     def get_sorted_order_x(self):
-        #it sorts the items given first the aisle, then the x location, adn finally for the location y
+        #it sorts the items given first the aisle, then the x location, and finally for the location y
+        #then we invert the orders of items that are on the right aisle of each rack
         #as so we can implement the return policy because the path calculation will follow the order of the items in each order
         sorted_order : [OrderItem] = sorted(self.order_items, key=lambda item: (
         item.location[0].aisle, item.location[0].get_location_x(), item.location[0].get_location_y()))
@@ -416,6 +418,34 @@ class Order:
                         break
         self.order_items = sorted_order
         #returns an sorted order, does not modify actual
+        return self     
+
+    def get_sorted_order_traversal(self):
+        #it sorts the items given first the aisle, then the y location, adn finally for the location x
+        #then we invert the orders of items each time we change rack
+        #as so we can implement the traversal policy because the path calculation will follow the order of the items in each order
+        
+        sorted_order : list[OrderItem] = sorted(self.order_items, key=lambda item: (
+        item.location[0].aisle, item.location[0].get_location_y(), item.location[0].get_location_x()))
+        #now i'm inverting the position of all the orders in the right aisle 
+        #in order to get the natural order of items for the return path inside the rack
+        aisles = []
+        #tracks which aisle are we analysing 
+        i = 0
+        aisles.append(sorted_order[0].location[0].aisle)
+        for iter in range(len(sorted_order)):
+            #if we are in the next rack 
+            if sorted_order[iter].location[0].aisle not in aisles:
+                i += 1
+                aisles.append(sorted_order[iter].location[0].aisle)
+                #if the analysing rack has to be inverted, we inverte it
+                if i % 2 == 1:
+                    inverted_aisle = [item for item in sorted_order if item.location[0].aisle == aisles[i]][::-1]
+                    sorted_order[iter : (iter + len(inverted_aisle))] = inverted_aisle
+                    #increment the iter to reach the next element out of the analysing aisle
+                    iter = iter + len(inverted_aisle) - 1
+        #save the changes
+        self.order_items = sorted_order
         return self     
 
     def set_sorted_order(self):
@@ -855,6 +885,8 @@ class WarehouseModel(mesa.Model):
                     item.add_order_id(order.order_id)
             if self.policy == 'return':
                 return [order.get_sorted_order_x() for order in orders]
+            elif self.policy == 'traversal':
+                return [order.get_sorted_order_traversal() for order in orders]
             else:
                 return [order.get_sorted_order() for order in orders]
 
@@ -869,7 +901,9 @@ class WarehouseModel(mesa.Model):
                 print(bat)
                 order_batch= OrderBatch(id, bat) #we convert the batch into an 'order'
                 if self.policy == 'return':
-                    order_batch.get_sorted_order_x()                
+                    order_batch.get_sorted_order_x()  
+                elif self.policy == 'traversal':
+                    order_batch.get_sorted_order_traversal()              
                 lista_batches.append(order_batch)
                 print(order_batch)
                 id+=1
@@ -1025,8 +1059,8 @@ from itertools import combinations
 
 # modify the following two variable to set running features
 batching_mode = True
-typology = 'horizontal'
-policy = 'return'
+typology = 'vertical'
+policy = 'traversal'
 
 o_warehouse.reshuffle(typology)
 if typology == 'original': 
