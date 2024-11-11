@@ -390,6 +390,14 @@ class Order:
         return order_items
 
     def get_sorted_order(self):
+        #it sorts the items given first the aisle, then the y location, adn finally for the location x
+        sorted_order = sorted(self.order_items, key=lambda item: (
+        item.location[0].aisle, item.location[0].get_location_y(), item.location[0].get_location_x()))
+        self.order_items = sorted_order
+        #returns an sorted order, does not modify actual
+        return self
+
+    def get_sorted_order_x(self):
         #it sorts the items given first the aisle, then the x location, adn finally for the location y
         #as so we can implement the return policy because the path calculation will follow the order of the items in each order
         sorted_order : [OrderItem] = sorted(self.order_items, key=lambda item: (
@@ -404,17 +412,16 @@ class Order:
             if inverted_aisle.count != 0:
                 for id_x, orderItem in enumerate(sorted_order):
                     if orderItem.location[0].get_location_x() == i:
-                        sorted_order[id_x : id_x + inverted_aisle.count] = inverted_aisle
+                        sorted_order[id_x : (id_x + len(inverted_aisle))] = inverted_aisle
                         break
         self.order_items = sorted_order
         #returns an sorted order, does not modify actual
-        return self
-    
+        return self     
 
     def set_sorted_order(self):
         #this rewrites the order
         self.order_items = sorted(self.order_items, key=lambda item: (
-        item.location[0].aisle, item.location[0].get_location_x(), item.location[0].get_location_y()))
+        item.location[0].aisle, item.location[0].get_location_y(), item.location[0].get_location_x()))
 
     def order_pop(self, index=0):
         #it allows to take out an item 
@@ -480,7 +487,7 @@ class OrderBatch(Order):
 ##############################
 
 class Picker(mesa.Agent):
-    def __init__(self, picker_id, model, current_position, speed=0.95, pref_batch=False, linked_amr=None,
+    def __init__(self, picker_id, model, current_position, policy, speed=0.95, pref_batch=False, linked_amr=None,
                  next_action="wait", path=[]):
         super().__init__(picker_id, model)
         #current position
@@ -500,6 +507,7 @@ class Picker(mesa.Agent):
         #path determined to follow
         self.path = path
         self.pref_batch = pref_batch
+        self.policy = policy
 
     def compute_path(self, current_position, final_position):
         #to understand the input let's look into when the function is called in step method
@@ -534,13 +542,14 @@ class Picker(mesa.Agent):
         elif current_pos[0] // module_width != final_position[0] // module_width:
             #the warehouse has a cross aisle that allows the picker to change modules, so the picker must reach the position of the cross aisle first
             #determine if the picker should take the way up or down, when entering the next aisle according the distance from the actual position (in the y sense) 
-
-
-            lower_y_limit = self.model.warehouse.length
-            entry = "upper" if final_position[1] + current_pos[1] <= lower_y_limit - final_position[1] + lower_y_limit - \
-                               current_pos[1] else "lower"
-            #same comparison as above, seiing if the picker has to move on the widht of the aisle in which direction
-            #and move him until it reaches the chosen exit of the aisle
+            if self.policy == 'return':
+                entry = "upper"
+            else:
+                lower_y_limit = self.model.warehouse.length
+                entry = "upper" if final_position[1] + current_pos[1] <= lower_y_limit - final_position[1] + lower_y_limit - \
+                                current_pos[1] else "lower"
+                #same comparison as above, seiing if the picker has to move on the widht of the aisle in which direction
+                #and move him until it reaches the chosen exit of the aisle
 
             increment_x = -1 if final_position[0] <= current_pos[0] else 1
             #and move him until it reaches the chosen entry of the destination aisle, moving in it in the - direction in the y axis
@@ -664,9 +673,13 @@ class Picker(mesa.Agent):
             #if the robot is not ready postpone the unloading to the next time
             elif not(is_robot_ready):
                 self.next_actions +=["unload"]
+
+
 from collections import defaultdict
+
+
 class Amr(mesa.Agent):
-    def __init__(self, amr_id, model, current_position, linked_picker=None, next_action="wait"):
+    def __init__(self, amr_id, model, current_position, policy, linked_picker=None, next_action="wait"):
         super().__init__(amr_id, model)
         #position
         self.current_pos = current_position
@@ -680,6 +693,7 @@ class Amr(mesa.Agent):
         self.path = []
         #number of orders it can carry
         self.capacity = 4
+        self.policy = policy
 
     def load_amr(self, item: OrderItem, order_id):
         #add and item to the carried items
@@ -699,9 +713,12 @@ class Amr(mesa.Agent):
             for y in range(current_pos[1], final_position[1], increment_y):
                 path.append([current_pos[0], y + increment_y])
         elif current_pos[0] // module_width != final_position[0] // module_width:
-            lower_y_limit = self.model.warehouse.length
-            entry = "upper" if final_position[1] + current_pos[1] <= lower_y_limit - final_position[1] + lower_y_limit - \
-                               current_pos[1] else "lower"
+            if self.policy == 'return':
+                entry = "upper"
+            else:           
+                lower_y_limit = self.model.warehouse.length
+                entry = "upper" if final_position[1] + current_pos[1] <= lower_y_limit - final_position[1] + lower_y_limit - \
+                                    current_pos[1] else "lower"
             increment_x = -1 if final_position[0] <= current_pos[0] else 1
             if entry == "upper" and current_pos[1] not in [0, 1]:
                 top_limit = 1 if final_position[1] == 0 else self.model.warehouse.cross_aisle_width
@@ -806,7 +823,7 @@ class Amr(mesa.Agent):
 ##############################
 
 class WarehouseModel(mesa.Model):
-    def __init__(self, warehouse, n_pickers, n_amr, orders, batching, method, batch_size):
+    def __init__(self, warehouse, n_pickers, n_amr, orders, batching, method, batch_size, policy):
         super().__init__()
         self.warehouse = warehouse
         self.n_pickers = n_pickers
@@ -814,18 +831,19 @@ class WarehouseModel(mesa.Model):
         self.available_amr = []
         self.schedule = mesa.time.BaseScheduler(self)
         self.batch_size = batch_size
+        self.policy = policy
         self.orders = self.get_orders(orders, batching, method)
         
         
         #print(self.orders)
         #picker and amr start at the io point
         for picker_id in range(self.n_pickers):
-            picker = Picker(picker_id=picker_id, model=self, current_position=self.warehouse.io_pos)
+            picker = Picker(picker_id=picker_id, model=self, current_position=self.warehouse.io_pos, policy = policy)
             self.schedule.add(picker)
 
         for amr_id in range(self.n_amr):
             
-            amr = Amr(amr_id=n_pickers + amr_id, model=self, current_position=self.warehouse.io_pos)
+            amr = Amr(amr_id=n_pickers + amr_id, model=self, current_position=self.warehouse.io_pos, policy = policy)
             self.available_amr.append(amr)
             self.schedule.add(amr)
     
@@ -835,8 +853,11 @@ class WarehouseModel(mesa.Model):
             for order in orders:
                 for item in order.order_items:
                     item.add_order_id(order.order_id)
-            
-            return [order.get_sorted_order() for order in orders]
+            if self.policy == 'return':
+                return [order.get_sorted_order_x() for order in orders]
+            else:
+                return [order.get_sorted_order() for order in orders]
+
         else:
             lista_batches = []
             batches_obj = Batch(orders, method, self.batch_size) #we create the batch depending on the method
@@ -847,11 +868,14 @@ class WarehouseModel(mesa.Model):
                 print(id)
                 print(bat)
                 order_batch= OrderBatch(id, bat) #we convert the batch into an 'order'
+                if self.policy == 'return':
+                    order_batch.get_sorted_order_x()                
                 lista_batches.append(order_batch)
                 print(order_batch)
                 id+=1
             print('the number of batches is', len(batches))
             print('the number of orders in each bach is', [len(orders) for orders in batches])
+
             return lista_batches
 
     def step(self):
@@ -1001,15 +1025,16 @@ from itertools import combinations
 
 # modify the following two variable to set running features
 batching_mode = True
-typology = 'horizontal' #could be horizontal, vertical, oblique
+typology = 'horizontal'
+policy = 'return'
 
 o_warehouse.reshuffle(typology)
-if typology == 'original':
+if typology == 'original': 
     o_orders = pickle.load(open('orders_list_original.pkl', 'rb'))
 else:
     o_orders = pickle.load(open('orders_list.pkl', 'rb'))
 
-o_warehousemodel = WarehouseModel(warehouse=o_warehouse, n_pickers=2, n_amr=2, orders=o_orders, batching= batching_mode, method = 'distance', batch_size = 6)
+o_warehousemodel = WarehouseModel(warehouse=o_warehouse, n_pickers=2, n_amr=2, orders=o_orders, batching= batching_mode, method = 'distance', batch_size = 6, policy= policy)
 
 
 
