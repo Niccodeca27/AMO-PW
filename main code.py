@@ -23,64 +23,94 @@ AVERAGE_LINES_PER_ORDER = 1.5
 #to create a warehouse you need number of aisle, module widht, rack depth, cross aisle widht, and aisle lenght, plus the position of the i/o point and the charging point
 class Warehouse:
     def __init__(self, number_of_aisles: int, module_width: int, rack_depth: int, cross_aisle_width: int,
-                 aisle_length: int, io_pos=(0, 0), charge_pos=(0, 1)):
-        #from the input
+                 aisle_length: int):
+        
+## AGGIUNTO DIVERSE POSIZIONI DELL'I/O E FATTO IN MODO CHE NELLA STESSA POSIZIONE DELL'I/O L'AMR SI POSSA RICARICARE
+        
+        # basic warehouse parameters
         self.number_of_aisles = number_of_aisles
         self.aisle_length = aisle_length
         self.module_width = module_width
         self.rack_depth = rack_depth
         self.cross_aisle_width = cross_aisle_width
         
-        self.io_pos = io_pos
-        self.charge_pos = charge_pos
-        #the width of the warehouse is equivalent at the module width * number of modules (or aisles)
         self.width = self.module_width * self.number_of_aisles
-        #the aisle is equivalent at the aisle width + the up and down aisle to move
         self.length = self.aisle_length + 2 * self.cross_aisle_width
-
-        #create the grid
+        
+        # Configure I/O positions based on io_config parameter
+        # self.io_positions = self._set_io_positions(io_config)
+        # Set charging positions to be the same as I/O positions
+        
+        
+        # create the grid
         self.grid = [[0 for _ in range(self.width)] for _ in range(self.length)]
         
-        #it calls methods within the same class to generate the grid
-        
+        # populate the grid
         self.grid = self._add_aisles_to_grid(aisle_seq=self._gen_aisles_list(), grid=self.grid)
-        self.grid = self._add_io_pos(self.io_pos, self.grid)
-        self.grid = self._add_charging_station(self.charge_pos, self.grid)
+        self.grid = self._add_io_and_charging_positions(self.io_positions, self.grid)
         self.locations = self._add_locations(aisle_seq=self._gen_aisles_list())
         self.inventory = self._add_inventory()
-
+        
+        
     def _gen_aisles_list(self):
-        #this creates a list with the position of the different aisles based on the module width
-        aisle_seq = [0, self.module_width - 1]
-        for i in range(self.number_of_aisles - 1):
-            #each item of the list has the position of the beggining of the aisle, and the position of the end of the aisle
-            aisle_seq += [aisle_seq[0 + i * 2] + self.module_width, aisle_seq[1 + i * 2] + self.module_width]
-        return aisle_seq
+            #this creates a list with the position of the different aisles based on the module width
+            aisle_seq = [0, self.module_width - 1]
+            for i in range(self.number_of_aisles - 1):
+                #each item of the list has the position of the beggining of the aisle, and the position of the end of the aisle
+                aisle_seq += [aisle_seq[0 + i * 2] + self.module_width, aisle_seq[1 + i * 2] + self.module_width]
+            return aisle_seq
 
     def _add_aisles_to_grid(self, aisle_seq, grid):
-        aisle_seq = aisle_seq
-        grid = grid
-        #it adds the aisles to the grid
-        #it iterates in the rows of the grid, excluding the cross aisles
+            aisle_seq = aisle_seq
+            grid = grid
+            #it adds the aisles to the grid
+            #it iterates in the rows of the grid, excluding the cross aisles
+            
+            for y, row in enumerate(grid[self.cross_aisle_width:-self.cross_aisle_width]):
+                for x in aisle_seq:
+                    #in the position of the aisles, it adds the corresponding representation of the aisle
+                    grid[y + self.cross_aisle_width][x] = AISLE_REPR
+            return grid
+
+    def _set_io_positions(self, io_config: str) -> list:
+        """
+        Determina le posizioni I/O basate sulla configurazione specificata
         
-        for y, row in enumerate(grid[self.cross_aisle_width:-self.cross_aisle_width]):
-            for x in aisle_seq:
-                #in the position of the aisles, it adds the corresponding representation of the aisle
-                grid[y + self.cross_aisle_width][x] = AISLE_REPR
+        Args:
+            io_config: può essere 'left', 'centered', o 'full'
+            
+        Returns:
+            Lista di tuple con le coordinate (x,y) delle posizioni I/O
+        """
+        self.io_positions = []
+        if io_config == 'left':
+            self.io_positions = [(0, 0)]
+        elif io_config == 'centered':
+            self.io_positions= [(int((self.width-1)/2), 0)]  # reso dinamico usando self.width
+        elif io_config == 'full':
+            self.io_positions =  [(x, 0) for x in range(self.width)]
+        else:
+            raise ValueError("io_config deve essere 'left', 'centered', o 'full'")
+        self.charge_positions = self.io_positions
+
+# PER CONTROLLARE SE E' GIUSTO DOVE METTE L'I/O
+#        Aggiunge le posizioni I/O e di ricarica al grid (stesse posizioni)
+#        Args:
+#            positions: lista di tuple (x,y) per le posizioni I/O e di ricarica
+#            grid: il grid corrente del magazzino      
+#        Returns: Grid aggiornato con le posizioni I/O e di ricarica
+    def _add_io_and_charging_positions(self, positions: list, grid: list) -> list:
+        for x, y in positions:
+            grid[y][x] = 3  # usando 3 per indicare una posizione che è sia I/O che charging
         return grid
 
-    def _add_io_pos(self, io_pos, grid, placeholder = PICK_LOCATION_REPR):
-        #it adds the i/o pos to the grid
-        grid = grid
-        #in the position of the i/o point it adds the symbl related to pick_location_repr
-        grid[io_pos[1]][io_pos[0]] = placeholder
-        return grid
+#    Restituisce tutte le posizioni che sono sia I/O che charging
+    def get_io_and_charge_positions(self):
+        return self.io_positions
 
-    def _add_charging_station(self, charge_pos, grid, placeholder= CHARGING_STATION_REPR):
-        #same as with the previous method but adding the charging station
-        grid = grid
-        grid[charge_pos[1]][charge_pos[0]] = placeholder
-        return grid
+#    Verifica se una posizione è sia punto I/O che charging
+    def is_io_and_charge_point(self, position: tuple) -> bool:
+        return position in self.io_positions
 
     def _add_locations(self, aisle_seq):
         #this methods is for generate the picking position in the aisles
@@ -176,7 +206,7 @@ class Warehouse:
                     o_abc.classc[idx-240].changelocation([loc])
                     o_abc.classc[idx-240].item_class('C')
                     inventory_reshuffle.append(o_abc.classc[idx-240])  
-        if typology == 'horizontal':
+        elif typology == 'horizontal':
             i = 0
             j = 0
             k = 0
@@ -198,7 +228,7 @@ class Warehouse:
                     o_abc.classc[k].item_class('C')
                     inventory_reshuffle.append(o_abc.classc[k])
                     k = k + 1
-        if typology == 'oblique':
+        elif typology == 'oblique':
             i = 0
             j = 0
             k = 0
@@ -220,10 +250,31 @@ class Warehouse:
                     o_abc.classc[k].item_class('C')
                     inventory_reshuffle.append(o_abc.classc[k])
                     k = k + 1
-        if typology == 'original':
+        elif typology == 'double_oblique': ##COME oblique MA AL CENTRO (PER I/O CENTRALE)
+            i = 0
+            j = 0
+            k = 0
+            for idx, loc in enumerate(locations):
+                ranges_a = [(96,100),(144,160),(192,220),(240,268),(288,304),(336,340)]
+                ranges_b = [(0,4),(48,60),(100,120),(160,176),(220,240),(268,288),(304,320),(340,360),(384,396),(432,436)]
+                if any(start <= idx < end for start, end in ranges_a):
+                    o_abc.classa[i].changelocation([loc])
+                    o_abc.classa[i].item_class('A')
+                    inventory_reshuffle.append(o_abc.classa[i])
+                    i = i + 1
+                elif any(start <= idx < end for start, end in ranges_b):
+                    o_abc.classb[j].changelocation([loc])
+                    o_abc.classb[j].item_class('B')
+                    inventory_reshuffle.append(o_abc.classb[j])
+                    j = j + 1
+                else:
+                    o_abc.classc[k].changelocation([loc])
+                    o_abc.classc[k].item_class('C')
+                    inventory_reshuffle.append(o_abc.classc[k])
+                    k = k + 1
+        elif typology == 'original':
             warehouse = pickle.load(open('warehouse_original.pkl','rb'))
             inventory_reshuffle = warehouse.inventory
-
         #print(inventory_reshuffle)
         self.inventory = inventory_reshuffle
         return inventory_reshuffle
@@ -398,7 +449,7 @@ class Order:
         return self
 
     #used for return picking policy
-    def get_sorted_order_x(self):
+    def get_sorted_order_return(self):
         #it sorts the items given first the aisle, then the x location, and finally for the location y
         #then we invert the orders of items that are on the right aisle of each rack
         #as so we can implement the return policy because the path calculation will follow the order of the items in each order
@@ -517,11 +568,11 @@ class OrderBatch(Order):
 ##############################
 
 class Picker(mesa.Agent):
-    def __init__(self, picker_id, model, current_position, policy, speed=0.95, pref_batch=False, linked_amr=None,
+    def __init__(self, picker_id, model, current_position, routing_policy, speed=0.95, pref_batch=False, linked_amr=None,
                  next_action="wait", path=[]):
         super().__init__(picker_id, model)
         #current position
-        self.current_pos = current_position
+        self.current_pos = current_position[0]
         #speed set
         self.speed = speed
         #item that it's holding
@@ -537,7 +588,7 @@ class Picker(mesa.Agent):
         #path determined to follow
         self.path = path
         self.pref_batch = pref_batch
-        self.policy = policy
+        self.routing_policy = routing_policy
 
     def compute_path(self, current_position, final_position):
         #to understand the input let's look into when the function is called in step method
@@ -552,7 +603,7 @@ class Picker(mesa.Agent):
         #current_pos[0] ([0] to access the first  coordinate) // module_width would be the module that it th picker is in (e.g the aisle)
         #final_position[0] (the coordinate) // module_width would be the module that it th item is in (e.g the aisle)
         #if they are the same (Meaning the item and the picker are in the same aisle) or if the current position is the origin ( list(current_pos) == [0, 0])
-        if current_pos[0] // module_width == final_position[0] // module_width or list(current_pos) == [0, 0]:
+        if current_pos[0] // module_width == final_position[0] // module_width or tuple(current_pos) in self.model.warehouse.io_positions:
             #calculate the direction in x in which the picker must move (increment x)
             # if the item is a position with a higher number, then the picker must move positive in the x axis
             #the other option, the picker has to move on the negative direction in the x. (it's like identifying is the picker must go backward or forwards in the module width)
@@ -572,7 +623,7 @@ class Picker(mesa.Agent):
         elif current_pos[0] // module_width != final_position[0] // module_width:
             #the warehouse has a cross aisle that allows the picker to change modules, so the picker must reach the position of the cross aisle first
             #determine if the picker should take the way up or down, when entering the next aisle according the distance from the actual position (in the y sense) 
-            if self.policy == 'return':
+            if self.routing_policy == 'return':
                 entry = "upper"
             else:
                 lower_y_limit = self.model.warehouse.length
@@ -584,7 +635,7 @@ class Picker(mesa.Agent):
             increment_x = -1 if final_position[0] <= current_pos[0] else 1
             #and move him until it reaches the chosen entry of the destination aisle, moving in it in the - direction in the y axis
             
-            if entry == "upper" and current_pos[1] not in [0,1]:
+            if entry == "upper" and current_pos[1] not in [0, 1]:
                 #in this case is either if it has to go to the origin (final_position = 0) or if the chosen entry is in the upper part. 
                 top_limit = 1 if final_position[1] == 0 else self.model.warehouse.cross_aisle_width
                 #this is vertical movement to go out of the aisle
@@ -601,12 +652,16 @@ class Picker(mesa.Agent):
                     path.append([current_pos[0], y + 1])
            
             #this is in the case the picker it's not properly on the aisle
-            if entry == "upper" and current_pos[1] in [0,1]:
+            # print(current_pos)
+            # print(final_position)
+           
+            if entry == "upper" and current_pos[1] in [0, 1]:
             
                 top_limit = self.model.warehouse.cross_aisle_width
                 #this is vertical movement to go out of the aisle
                 #the rest is the same as above
-                for y in range(current_pos[0], top_limit-1,1):
+                
+                for y in range(current_pos[1], top_limit-1,1):
                     path.append([current_pos[0], y+1])
                 current_pos = path[-1]
                 for x in range(current_pos[0], final_position[0], increment_x):
@@ -709,10 +764,10 @@ from collections import defaultdict
 
 
 class Amr(mesa.Agent):
-    def __init__(self, amr_id, model, current_position, policy, linked_picker=None, next_action="wait"):
+    def __init__(self, amr_id, model, current_position, routing_policy, linked_picker=None, next_action="wait"):
         super().__init__(amr_id, model)
         #position
-        self.current_pos = current_position
+        self.current_pos = current_position[0]
         #which is the picker linked
         self.linked_picker = linked_picker
         #items carried
@@ -723,7 +778,7 @@ class Amr(mesa.Agent):
         self.path = []
         #number of orders it can carry
         self.capacity = 4
-        self.policy = policy
+        self.routing_policy = routing_policy
 
     def load_amr(self, item: OrderItem, order_id):
         #add and item to the carried items
@@ -734,7 +789,7 @@ class Amr(mesa.Agent):
         path = []
         #same as picker
         module_width = self.model.warehouse.module_width
-        if current_pos[0] // module_width == final_position[0] // module_width or list(current_pos) == [0, 0]:
+        if current_pos[0] // module_width == final_position[0] // module_width or tuple(current_pos) in self.model.warehouse.io_positions:
             increment_x = -1 if final_position[0] <= current_pos[0] else 1
             for x in range(current_pos[0], final_position[0], increment_x):
                 path.append([x + increment_x, current_pos[1]])
@@ -743,7 +798,7 @@ class Amr(mesa.Agent):
             for y in range(current_pos[1], final_position[1], increment_y):
                 path.append([current_pos[0], y + increment_y])
         elif current_pos[0] // module_width != final_position[0] // module_width:
-            if self.policy == 'return':
+            if self.routing_policy == 'return':
                 entry = "upper"
             else:           
                 lower_y_limit = self.model.warehouse.length
@@ -761,9 +816,11 @@ class Amr(mesa.Agent):
                 for y in range(current_pos[1], final_position[1]):
                     path.append([current_pos[0], y + 1])
             if entry == "upper" and current_pos[1] in [0, 1]:
+                
                 top_limit = self.model.warehouse.cross_aisle_width
-                for y in range(current_pos[0], top_limit - 1, 1):
+                for y in range(current_pos[1], top_limit - 1, 1):
                     path.append([current_pos[0], y + 1])
+                
                 current_pos = path[-1]
                 for x in range(current_pos[0], final_position[0], increment_x):
                     path.append([x + increment_x, current_pos[1]])
@@ -782,9 +839,10 @@ class Amr(mesa.Agent):
                     path.append([current_pos[0], y - 1])
         return path
 
-    def compute_path_return(self, current_position, final_pos):
+    def compute_path_return(self, current_position, final_positions):
         current_pos = current_position
         path = []
+        final_pos = final_positions[0] if len(final_positions) == 1 else (current_pos[0], 0)
         for y in range(current_pos[1], final_pos[1], -1):
             path.append([current_pos[0], y-1])
         current_pos = path[-1]
@@ -819,7 +877,7 @@ class Amr(mesa.Agent):
                 #return
                 self.next_action = "return"
                 #return
-                self.path = self.compute_path_return(self.current_pos, self.model.warehouse.io_pos)
+                self.path = self.compute_path_return(self.current_pos, self.model.warehouse.io_positions)
             else:
                 #go to the next item in the order
                 self.path = self.compute_path(self.current_pos, self.linked_picker.item.location[0].picking_location)
@@ -853,7 +911,7 @@ class Amr(mesa.Agent):
 ##############################
 
 class WarehouseModel(mesa.Model):
-    def __init__(self, warehouse, n_pickers, n_amr, orders, batching, method, batch_size, policy):
+    def __init__(self, warehouse, n_pickers, n_amr, orders, batching, method, batch_size, routing_policy):
         super().__init__()
         self.warehouse = warehouse
         self.n_pickers = n_pickers
@@ -861,19 +919,19 @@ class WarehouseModel(mesa.Model):
         self.available_amr = []
         self.schedule = mesa.time.BaseScheduler(self)
         self.batch_size = batch_size
-        self.policy = policy
+        self.routing_policy = routing_policy
         self.orders = self.get_orders(orders, batching, method)
         
         
         #print(self.orders)
         #picker and amr start at the io point
         for picker_id in range(self.n_pickers):
-            picker = Picker(picker_id=picker_id, model=self, current_position=self.warehouse.io_pos, policy = policy)
+            picker = Picker(picker_id=picker_id, model=self, current_position=self.warehouse.io_positions, routing_policy = routing_policy)
             self.schedule.add(picker)
 
         for amr_id in range(self.n_amr):
             
-            amr = Amr(amr_id=n_pickers + amr_id, model=self, current_position=self.warehouse.io_pos, policy = policy)
+            amr = Amr(amr_id=n_pickers + amr_id, model=self, current_position=self.warehouse.io_positions, routing_policy = routing_policy)
             self.available_amr.append(amr)
             self.schedule.add(amr)
     
@@ -883,9 +941,9 @@ class WarehouseModel(mesa.Model):
             for order in orders:
                 for item in order.order_items:
                     item.add_order_id(order.order_id)
-            if self.policy == 'return':
-                return [order.get_sorted_order_x() for order in orders]
-            elif self.policy == 'traversal':
+            if self.routing_policy == 'return':
+                return [order.get_sorted_order_return() for order in orders]
+            elif self.routing_policy == 'traversal':
                 return [order.get_sorted_order_traversal() for order in orders]
             else:
                 return [order.get_sorted_order() for order in orders]
@@ -897,15 +955,15 @@ class WarehouseModel(mesa.Model):
             
             id = 0
             for bat in batches:
-                print(id)
-                print(bat)
+                # print(id)
+                # print(bat)
                 order_batch= OrderBatch(id, bat) #we convert the batch into an 'order'
-                if self.policy == 'return':
-                    order_batch.get_sorted_order_x()  
-                elif self.policy == 'traversal':
+                if self.routing_policy == 'return':
+                    order_batch.get_sorted_order_return()  
+                elif self.routing_policy == 'traversal':
                     order_batch.get_sorted_order_traversal()              
                 lista_batches.append(order_batch)
-                print(order_batch)
+                # print(order_batch)
                 id+=1
             print('the number of batches is', len(batches))
             print('the number of orders in each bach is', [len(orders) for orders in batches])
@@ -1042,7 +1100,7 @@ class Batch:
 #the orders and the warheouse are previously created
 o_orders = pickle.load(open('orders_list.pkl', 'rb'))
 #print(o_orders)
-o_warehouse = pickle.load(open('warehouse.pkl', 'rb'))
+o_warehouse : Warehouse = pickle.load(open('warehouse.pkl', 'rb'))
 o_abc = pickle.load(open('abc_categories.pkl', 'rb'))
 #print(o_abc)
 #primer_batch = o_orders[1:5]
@@ -1057,18 +1115,20 @@ from itertools import combinations
 #parole chiave per batch weight, items, distance, default
 #print(o_orders)
 
-# modify the following two variable to set running features
-batching_mode = True
-typology = 'vertical'
-policy = 'traversal'
+# MODIFY THE FOLLOWING VARIABLES TO SETUP RUNNING CONFIGURATIONS
+batching_mode = True  #activates or deactivates the batching
+storage_policy = 'double_oblique' #original, horizontal, vertical
+routing_policy = 'traversal' #traversal, return, anythingElse
+io_position = 'left' #left, centered, full
 
-o_warehouse.reshuffle(typology)
-if typology == 'original': 
+o_warehouse._set_io_positions(io_position) 
+o_warehouse.reshuffle(storage_policy)
+if storage_policy == 'original': 
     o_orders = pickle.load(open('orders_list_original.pkl', 'rb'))
 else:
     o_orders = pickle.load(open('orders_list.pkl', 'rb'))
 
-o_warehousemodel = WarehouseModel(warehouse=o_warehouse, n_pickers=2, n_amr=2, orders=o_orders, batching= batching_mode, method = 'distance', batch_size = 6, policy= policy)
+o_warehousemodel = WarehouseModel(warehouse=o_warehouse, n_pickers=2, n_amr=2, orders=o_orders, batching= batching_mode, method = 'distance', batch_size = 6, routing_policy= routing_policy)
 
 
 
