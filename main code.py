@@ -8,9 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from sklearn.preprocessing import StandardScaler
-from sklearn_extra.cluster import KMedoids
-from docx import Document
-from docx.shared import Inches
+# from sklearn_extra.cluster import KMedoids
 import os
 from matplotlib.patches import FancyArrowPatch
 
@@ -352,7 +350,7 @@ class Warehouse:
                     o_abc.classc[k].item_class('C')
                     inventory_reshuffle.append(o_abc.classc[k])
                     k = k + 1
-        elif typology == 'double_oblique': ##COME oblique MA AL CENTRO (PER I/O CENTRALE)
+        elif typology == 'double_oblique': ##like oblique but in the center (for central I/O)
             i = 0
             j = 0
             k = 0
@@ -391,6 +389,29 @@ class Warehouse:
                     item.item_class('C')
                 #print(item)
         #print(inventory_reshuffle)
+        elif typology == 'double_horizontal':
+            i = 0
+            j = 0
+            k = 0
+            for idx, loc in enumerate(locations):
+                ranges_a = [(0, 8),(44, 56),(92, 104),(140, 152),(188, 196),(236, 244),(284, 292),(332, 340),(380, 388),(428, 436),(476, 480)]
+                ranges_b = [(8, 12),(36, 44),(56, 60),(84, 92),(104, 108),(132, 140),(152, 156),(180, 188),(196, 204),(228, 236),(244, 252),(276, 284),(292, 300),(324, 332),(340, 348),(372, 380),(388, 396),(420, 428),(436, 444),(468, 476)]
+                if any(start <= idx < end for start, end in ranges_a):
+                    o_abc.classa[i].changelocation([loc])
+                    o_abc.classa[i].item_class('A')
+                    inventory_reshuffle.append(o_abc.classa[i])
+                    i = i + 1
+                elif any(start <= idx < end for start, end in ranges_b):
+                    o_abc.classb[j].changelocation([loc])
+                    o_abc.classb[j].item_class('B')
+                    inventory_reshuffle.append(o_abc.classb[j])
+                    j = j + 1
+                else:
+                    o_abc.classc[k].changelocation([loc])
+                    o_abc.classc[k].item_class('C')
+                    inventory_reshuffle.append(o_abc.classc[k])
+                    k = k + 1
+
         self.inventory = inventory_reshuffle
         return inventory_reshuffle
 
@@ -585,7 +606,7 @@ class ItemLocation:
 
 #it represents an item in the inventory, it has id, location , weight and volume
 class Item:
-    def __init__(self, item_id, location: [ItemLocation], weight, volume):
+    def __init__(self, item_id, location: list[ItemLocation], weight, volume):
         self.item_id = item_id
         self.location = location
         self.weight = weight
@@ -615,7 +636,7 @@ class Item:
 #and OrderItem, its parent class is item, so it has all the attributes
 #it represents an item that is ordered
 class OrderItem(Item):
-    def __init__(self, item_id, location: [ItemLocation], weight, volume, quantity):
+    def __init__(self, item_id, location: list[ItemLocation], weight, volume, quantity):
         super().__init__(item_id, location, weight, volume)
         self.quantity = quantity
         self.order_id = None
@@ -716,10 +737,14 @@ class Order:
 
     #used for return picking policy
     def get_sorted_order_return(self):
+        self.order_items = self.get_sorted_order_return_logic()
+        return self     
+
+    def get_sorted_order_return_logic(self):
         #it sorts the items given first the aisle, then the x location, and finally for the location y
         #then we invert the orders of items that are on the right aisle of each rack
         #as so we can implement the return policy because the path calculation will follow the order of the items in each order
-        sorted_order : [OrderItem] = sorted(self.order_items, key=lambda item: (
+        sorted_order : list[OrderItem] = sorted(self.order_items, key=lambda item: (
         item.location[0].aisle, item.location[0].get_location_x(), item.location[0].get_location_y()))
         #now i'm inverting the position of all the orders in the right aisle 
         #in order to get the natural order of items for the return path inside the rack
@@ -733,9 +758,12 @@ class Order:
                     if orderItem.location[0].get_location_x() == i:
                         sorted_order[id_x : (id_x + len(inverted_aisle))] = inverted_aisle
                         break
-        self.order_items = sorted_order
-        #returns an sorted order, does not modify actual
-        return self     
+        return sorted_order
+
+    def get_sorted_order_return_reverse(self):
+        sorted_reverse = self.get_sorted_order_return_logic()[::-1]
+        self.order_items = sorted_reverse
+        return self
 
     def get_sorted_order_traversal(self):
         #it sorts the items given first the aisle, then the y location, adn finally for the location x
@@ -763,7 +791,7 @@ class Order:
                     iter = iter + len(inverted_aisle) - 1
         #save the changes
         self.order_items = sorted_order
-        return self     
+        return self   
 
     def set_sorted_order(self):
         #this rewrites the order
@@ -968,8 +996,8 @@ class Picker(mesa.Agent):
                 for y in range(current_pos[1], final_position[1], -1):
                     path.append([current_pos[0], y - 1])
                     self.distance_walked+=1
-        if self.model.warehouse.graph:
-            self.model.warehouse.plot_warehouse(path, self.unique_id, current_position, final_position)
+        # if self.model.warehouse.graph:
+        #     self.model.warehouse.plot_warehouse(path, self.unique_id, current_position, final_position)
         return path
 
     def step(self):
@@ -983,7 +1011,7 @@ class Picker(mesa.Agent):
                 #it links the amr to the picker
                 self.linked_amr = self.model.available_amr.pop(0)
                 #It gives the next order based on criteria for assignment
-                self.order = self.model.assign_order(self.preference, self)
+                self.order = self.model.assign_order(self)
                 
                 if self.order == None:
                     self.next_actions += ["wait"]
@@ -1130,8 +1158,8 @@ class Amr(mesa.Agent):
                 current_pos = path[-1]
                 for y in range(current_pos[1], final_position[1], -1):
                     path.append([current_pos[0], y - 1])
-        if self.model.warehouse.graph:
-            self.model.warehouse.plot_warehouse(path, self.unique_id, current_position, final_position)
+        # if self.model.warehouse.graph:
+        #     self.model.warehouse.plot_warehouse(path, self.unique_id, current_position, final_position)
         return path
 
     def compute_path_return(self, current_position, final_positions):
@@ -1143,8 +1171,8 @@ class Amr(mesa.Agent):
         current_pos = path[-1]
         for x in range(current_pos[0],final_pos[0], -1):
             path.append([x-1, current_pos[1]])
-        if self.model.warehouse.graph:
-            self.model.warehouse.plot_warehouse(path, self.unique_id, current_position, final_pos)
+        # if self.model.warehouse.graph:
+        #     self.model.warehouse.plot_warehouse(path, self.unique_id, current_position, final_pos)
         return path
 
     def step(self):
@@ -1237,7 +1265,7 @@ class WarehouseModel(mesa.Model):
             picker = Picker(picker_id=picker_id, model=self, current_position=self.warehouse.io_positions, preference=preferences.pop(0), routing_policy=self.routing_policy)
             self.pickers.append(picker)
             self.schedule.add(picker)
-        self.warehouse.plot_warehouse([], 0, self.warehouse.io_positions[0], self.warehouse.charge_pos)
+        # self.warehouse.plot_warehouse([], 0, self.warehouse.io_positions[0], self.warehouse.charge_pos)
         #print(self.orders)
         
         #picker and amr start at the io point
@@ -1396,7 +1424,7 @@ class WarehouseModel(mesa.Model):
         order_centers_scaled = scaler.fit_transform(order_centers)
 
         # Apply KMedoids to generate clusters of orders using Manhattan distance
-        kmedoids = KMedoids(n_clusters=num_clusters, metric='manhattan')
+        kmedoids = KMedoids(n_clusters=num_clusters, metric='manhattan') # type: ignore
         kmedoids.fit(order_centers_scaled)
         labels = kmedoids.labels_
         
@@ -1410,7 +1438,7 @@ class WarehouseModel(mesa.Model):
             clusters_pos[label].append(center)
         # Crear el gráfico
 
-        self.warehouse.plot_warehouse_clusters(clusters_pos)
+        #self.warehouse.plot_warehouse_clusters(clusters_pos)
         
         total_items = 0
         for cluster_id, cluster in enumerate(clusters):
@@ -1516,7 +1544,7 @@ class WarehouseModel(mesa.Model):
         return picker_orders
     
     #ADDED
-    def assign_order(self, preference, picker):
+    def assign_order(self, picker : Picker):
         picker_location = picker.current_pos 
         picker.num_order +=1
         #print('num_order', picker.num_order)
@@ -1531,15 +1559,17 @@ class WarehouseModel(mesa.Model):
                 return next_order
             else:
                 return None
-        elif self.assignation_method == 'AMR':
-            ids = {2: 0, 3: 1}
-            #print(picker.linked_amr.unique_id)
-            if len(self.orders_for_pickers[ids[picker.linked_amr.unique_id]])>0:
-                next_order =  self.orders_for_pickers[ids[picker.linked_amr.unique_id]].pop(0)
-                self.orders.remove(next_order)
-                return next_order
-            else:
-                return None
+
+        #tried to write an amr based method
+        # elif self.assignation_method == 'AMR':
+        #     ids = {2: 0, 3: 1}
+        #     #print(picker.linked_amr.unique_id)
+        #     if len(self.orders_for_pickers[ids[picker.linked_amr.unique_id]])>0:
+        #         next_order =  self.orders_for_pickers[ids[picker.linked_amr.unique_id]].pop(0)
+        #         self.orders.remove(next_order)
+        #         return next_order
+        #     else:
+        #         return None
             
         
         elif self.assignation_method == 'pref_distance':       
@@ -1617,6 +1647,13 @@ class WarehouseModel(mesa.Model):
                             picker.satisfaction +=1
                 self.orders.remove(lighter_order)
                 return lighter_order
+            
+        elif self.assignation_method == 'return_v2':
+            if picker.linked_amr.current_pos[0] < self.warehouse.width/2 : 
+                return self.orders.pop(0)
+            else:
+                return self.orders.pop()
+
     
     def calculate_average_manhattan_distance(self, order, picker_location):
         distance = 0
@@ -1667,6 +1704,12 @@ class WarehouseModel(mesa.Model):
                 return [order.get_sorted_order_return() for order in orders]
             elif self.routing_policy == 'traversal':
                 return [order.get_sorted_order_traversal() for order in orders]
+            elif self.routing_policy == 'return_v2':
+                ordersToReturn = []
+                size = len(orders)
+                ordersToReturn += [order.get_sorted_order_return() for order in orders[0 : int(size/2)]]
+                ordersToReturn += [order.get_sorted_order_return_reverse() for order in orders[int(size/2) : size]]
+                return ordersToReturn
             else:
                 return [order.get_sorted_order() for order in orders]
 
@@ -1683,7 +1726,12 @@ class WarehouseModel(mesa.Model):
                 if self.routing_policy == 'return':
                     order_batch.get_sorted_order_return()  
                 elif self.routing_policy == 'traversal':
-                    order_batch.get_sorted_order_traversal()              
+                    order_batch.get_sorted_order_traversal()
+                elif self.routing_policy == 'return_v2':
+                    if id < int(len(batches)/2):
+                        order_batch.get_sorted_order_return()
+                    else:
+                        order_batch.get_sorted_order_return_reverse()               
                 lista_batches.append(order_batch)
                 # print(order_batch)
                 id+=1
@@ -1846,21 +1894,21 @@ from itertools import combinations
 #print(o_orders)
 
 
-storage_policies = {'v': 'vertical', 'h': 'horizontal', 'o': 'oblique', 'oo': 'double_oblique', 'random': 'original'}
+storage_policies = {'v': 'vertical', 'h': 'horizontal', 'hh': 'double_horizontal', 'o': 'oblique', 'oo': 'double_oblique', 'random': 'original'}
 possible_io ={'c': 'centered', 'l': 'left','f': 'full'}
-routing_policies = {'t': 'traversal', 'r': 'return', 'd': 'default'}
+routing_policies = {'t': 'traversal', 'r': 'return', 'd': 'default', 'r2' : 'return_v2'}
 batching_methods = {'d': 'distance', 'w':'weight', 'i': 'items', 'df': 'default' }
-assignation_methods = {'p': 'productivity', 'pp': 'picker_preference', 'o': 'ordered'}
+assignation_methods = {'p': 'productivity', 'pp': 'picker_preference', 'o': 'ordered', 'r2' : 'return_v2'}
 
 
 # MODIFY THE FOLLOWING VARIABLES TO SETUP RUNNING CONFIGURATIONS
-storage_policy = storage_policies['random']
-routing_policy = routing_policies['d']
-io_position = possible_io['l']
-batching_mode = False #tivates or deactivates the batching
+storage_policy = storage_policies['hh']
+routing_policy = routing_policies['r2']
+io_position = possible_io['f']
+batching_mode = True #activates or deactivates the batching
 batching_method = batching_methods['d']
 batching_size = 6
-order_assignation  = assignation_methods['p']
+order_assignation  = assignation_methods['r2']
 
 #to change the io/positions
 o_warehouse._set_io_positions(io_position) 
