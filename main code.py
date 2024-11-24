@@ -765,6 +765,35 @@ class Order:
         self.order_items = sorted_reverse
         return self
 
+    def get_sorted_order_double_return(self):
+        sorted_return = self.get_sorted_order_return_logic()
+        last_aisle = max([item.location[0].aisle for item in sorted_return])
+        #takes all the items in the last aisle and order them firstly by the Y axis and then by the X one
+        last_aisle_sorted = sorted([item for item in sorted_return if item.location[0].aisle == last_aisle],
+            key=lambda item: (item.location[0].get_location_y(), item.location[0].get_location_x()))
+        #remove all the items in the last aisle from the main list
+        sorted_return = [item for item in sorted_return if item.location[0].aisle != last_aisle]
+        #takes all the items in the lower part of the warehouse (a imaginary horizontal line is at half of the warehouse) and removes them from the main list
+        lower_part = [item for item in sorted_return if item.location[0].get_location_y() > 9]
+        sorted_return = [item for item in sorted_return if item.location[0].get_location_y() < 10]
+        self.order_items = sorted_return + last_aisle_sorted
+        if lower_part:
+            first_aisle = min([item.location[0].aisle for item in lower_part])
+            #these are all the items in the closest aisle to the I/O, that are the last items to pick  
+            closest_last_aisle = sorted([item for item in lower_part if item.location[0].aisle == first_aisle],
+                key=lambda item: (item.location[0].get_location_y(), item.location[0].get_location_x()))[::-1]
+            #remove those elements just sorted 
+            lower_part = [item for item in lower_part if item.location[0].aisle != first_aisle]
+            to_calc_y_ax = [item.location[0].get_location_y() for item in lower_part]
+            if to_calc_y_ax:
+                y_ax = max(to_calc_y_ax)
+                reversed_lower_part = []
+                for i in reversed(range(6, y_ax)):
+                    reversed_lower_part += [item for item in lower_part if item.location[0].get_location_x() == i]
+                self.order_items += reversed_lower_part 
+            self.order_items += closest_last_aisle
+        return self
+
     def get_sorted_order_traversal(self):
         #it sorts the items given first the aisle, then the y location, adn finally for the location x
         #then we invert the orders of items each time we change rack
@@ -996,8 +1025,8 @@ class Picker(mesa.Agent):
                 for y in range(current_pos[1], final_position[1], -1):
                     path.append([current_pos[0], y - 1])
                     self.distance_walked+=1
-        # if self.model.warehouse.graph:
-        #     self.model.warehouse.plot_warehouse(path, self.unique_id, current_position, final_position)
+        if self.model.warehouse.graph:
+            self.model.warehouse.plot_warehouse(path, self.unique_id, current_position, final_position)
         return path
 
     def step(self):
@@ -1158,8 +1187,8 @@ class Amr(mesa.Agent):
                 current_pos = path[-1]
                 for y in range(current_pos[1], final_position[1], -1):
                     path.append([current_pos[0], y - 1])
-        # if self.model.warehouse.graph:
-        #     self.model.warehouse.plot_warehouse(path, self.unique_id, current_position, final_position)
+        if self.model.warehouse.graph:
+            self.model.warehouse.plot_warehouse(path, self.unique_id, current_position, final_position)
         return path
 
     def compute_path_return(self, current_position, final_positions):
@@ -1171,8 +1200,8 @@ class Amr(mesa.Agent):
         current_pos = path[-1]
         for x in range(current_pos[0],final_pos[0], -1):
             path.append([x-1, current_pos[1]])
-        # if self.model.warehouse.graph:
-        #     self.model.warehouse.plot_warehouse(path, self.unique_id, current_position, final_pos)
+        if self.model.warehouse.graph:
+            self.model.warehouse.plot_warehouse(path, self.unique_id, current_position, final_pos)
         return path
 
     def step(self):
@@ -1265,7 +1294,8 @@ class WarehouseModel(mesa.Model):
             picker = Picker(picker_id=picker_id, model=self, current_position=self.warehouse.io_positions, preference=preferences.pop(0), routing_policy=self.routing_policy)
             self.pickers.append(picker)
             self.schedule.add(picker)
-        # self.warehouse.plot_warehouse([], 0, self.warehouse.io_positions[0], self.warehouse.charge_pos)
+        if self.warehouse.plot: 
+            self.warehouse.plot_warehouse([], 0, self.warehouse.io_positions[0], self.warehouse.charge_pos)
         #print(self.orders)
         
         #picker and amr start at the io point
@@ -1438,7 +1468,8 @@ class WarehouseModel(mesa.Model):
             clusters_pos[label].append(center)
         # Crear el gráfico
 
-        #self.warehouse.plot_warehouse_clusters(clusters_pos)
+        if self.warehouse.plot: 
+            self.warehouse.plot_warehouse_clusters(clusters_pos)
         
         total_items = 0
         for cluster_id, cluster in enumerate(clusters):
@@ -1710,6 +1741,8 @@ class WarehouseModel(mesa.Model):
                 ordersToReturn += [order.get_sorted_order_return() for order in orders[0 : int(size/2)]]
                 ordersToReturn += [order.get_sorted_order_return_reverse() for order in orders[int(size/2) : size]]
                 return ordersToReturn
+            elif self.routing_policy == 'double_return':
+                return [order.get_sorted_order_double_return() for order in orders]
             else:
                 return [order.get_sorted_order() for order in orders]
 
@@ -1731,7 +1764,9 @@ class WarehouseModel(mesa.Model):
                     if id < int(len(batches)/2):
                         order_batch.get_sorted_order_return()
                     else:
-                        order_batch.get_sorted_order_return_reverse()               
+                        order_batch.get_sorted_order_return_reverse()
+                elif self.routing_policy == 'double_return':
+                    order_batch.get_sorted_order_double_return()
                 lista_batches.append(order_batch)
                 # print(order_batch)
                 id+=1
@@ -1896,19 +1931,19 @@ from itertools import combinations
 
 storage_policies = {'v': 'vertical', 'h': 'horizontal', 'hh': 'double_horizontal', 'o': 'oblique', 'oo': 'double_oblique', 'random': 'original'}
 possible_io ={'c': 'centered', 'l': 'left','f': 'full'}
-routing_policies = {'t': 'traversal', 'r': 'return', 'd': 'default', 'r2' : 'return_v2'}
+routing_policies = {'t': 'traversal', 'r': 'return', 'd': 'default', 'r2' : 'return_v2', 'rr' : 'double_return'} #with rr, order_assignation = 'o'
 batching_methods = {'d': 'distance', 'w':'weight', 'i': 'items', 'df': 'default' }
 assignation_methods = {'p': 'productivity', 'pp': 'picker_preference', 'o': 'ordered', 'r2' : 'return_v2'}
 
 
 # MODIFY THE FOLLOWING VARIABLES TO SETUP RUNNING CONFIGURATIONS
 storage_policy = storage_policies['hh']
-routing_policy = routing_policies['r2']
+routing_policy = routing_policies['rr']
 io_position = possible_io['f']
 batching_mode = True #activates or deactivates the batching
 batching_method = batching_methods['d']
 batching_size = 6
-order_assignation  = assignation_methods['r2']
+order_assignation = assignation_methods['o']
 
 #to change the io/positions
 o_warehouse._set_io_positions(io_position) 

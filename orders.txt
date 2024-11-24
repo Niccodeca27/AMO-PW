@@ -196,22 +196,22 @@ Order id: 10
 Order items: 
 
 
-Item id:   12  Location:x =  4| y = 14| z =  0  Weight:  1.7  Volume: 0.54  Quantity:  1, Order: 
+Item id:   12  Location:x =  4| y = 14| z =  0  Weight:  1.7  Volume: 0.54  Quantity:  1, Order: 10
 ----------------------------------------------------------------------------------------------------
 
-Item id:  411  Location:x =  5| y =  4| z =  1  Weight:  0.7  Volume: 0.83  Quantity:  2, Order: 
+Item id:  411  Location:x =  5| y =  4| z =  1  Weight:  0.7  Volume: 0.83  Quantity:  2, Order: 10
 ----------------------------------------------------------------------------------------------------
 
-Item id:  471  Location:x = 19| y = 15| z =  2  Weight:  1.2  Volume: 0.44  Quantity:  3, Order: 
+Item id:  471  Location:x = 19| y = 15| z =  2  Weight:  1.2  Volume: 0.44  Quantity:  3, Order: 10
 ----------------------------------------------------------------------------------------------------
 
-Item id:  470  Location:x =  4| y =  4| z =  3  Weight:  0.9  Volume: 0.85  Quantity:  3, Order: 
+Item id:  470  Location:x =  4| y =  4| z =  3  Weight:  0.9  Volume: 0.85  Quantity:  3, Order: 10
 ----------------------------------------------------------------------------------------------------
 
-Item id:  134  Location:x = 10| y = 13| z =  1  Weight:  1.6  Volume: 0.38  Quantity:  1, Order: 
+Item id:  134  Location:x = 10| y = 13| z =  1  Weight:  1.6  Volume: 0.38  Quantity:  1, Order: 10
 ----------------------------------------------------------------------------------------------------
 
-Item id:  214  Location:x = 14| y = 11| z =  0  Weight:  0.4  Volume: 0.21  Quantity:  1, Order: 
+Item id:  214  Location:x = 14| y = 11| z =  0  Weight:  0.4  Volume: 0.21  Quantity:  1, Order: 10
 ----------------------------------------------------------------------------------------------------
 
 
@@ -517,10 +517,10 @@ Order id: 28
 Order items: 
 
 
-Item id:  152  Location:x =  5| y =  4| z =  3  Weight:  1.9  Volume: 0.85  Quantity:  3, Order: 28
+Item id:  152  Location:x =  5| y =  4| z =  3  Weight:  1.9  Volume: 0.85  Quantity:  3, Order: 
 ----------------------------------------------------------------------------------------------------
 
-Item id:  104  Location:x = 24| y = 13| z =  3  Weight:  1.6  Volume: 0.96  Quantity:  3, Order: 28
+Item id:  104  Location:x = 24| y = 13| z =  3  Weight:  1.6  Volume: 0.96  Quantity:  3, Order: 
 ----------------------------------------------------------------------------------------------------
 
 
@@ -529,19 +529,19 @@ Order id: 29
 Order items: 
 
 
-Item id:  167  Location:x =  0| y = 13| z =  1  Weight:  0.1  Volume: 0.15  Quantity:  3, Order: 
+Item id:  167  Location:x =  0| y = 13| z =  1  Weight:  0.1  Volume: 0.15  Quantity:  3, Order: 29
 ----------------------------------------------------------------------------------------------------
 
-Item id:  111  Location:x =  5| y =  6| z =  2  Weight:  0.5  Volume: 0.36  Quantity:  1, Order: 
+Item id:  111  Location:x =  5| y =  6| z =  2  Weight:  0.5  Volume: 0.36  Quantity:  1, Order: 29
 ----------------------------------------------------------------------------------------------------
 
-Item id:  379  Location:x = 10| y = 15| z =  1  Weight:  0.6  Volume: 0.21  Quantity:  2, Order: 
+Item id:  379  Location:x = 10| y = 15| z =  1  Weight:  0.6  Volume: 0.21  Quantity:  2, Order: 29
 ----------------------------------------------------------------------------------------------------
 
-Item id:   94  Location:x = 19| y = 15| z =  1  Weight:  0.5  Volume: 0.02  Quantity:  1, Order: 
+Item id:   94  Location:x = 19| y = 15| z =  1  Weight:  0.5  Volume: 0.02  Quantity:  1, Order: 29
 ----------------------------------------------------------------------------------------------------
 
-Item id:  291  Location:x =  0| y =  4| z =  3  Weight:  1.7  Volume: 0.77  Quantity:  3, Order: 
+Item id:  291  Location:x =  0| y =  4| z =  3  Weight:  1.7  Volume: 0.77  Quantity:  3, Order: 29
 ----------------------------------------------------------------------------------------------------
 
 
@@ -1135,19 +1135,19 @@ Order id: 62
 Order items: 
 
 
-Item id:  350  Location:x = 14| y = 13| z =  3  Weight:  0.9  Volume: 0.25  Quantity:  1, Order: 62
+Item id:  350  Location:x = 14| y = 13| z =  3  Weight:  0.9  Volume: 0.25  Quantity:  1, Order: 
 ----------------------------------------------------------------------------------------------------
 
-Item id:  461  Location:x = 20| y =  4| z =  0  Weight:  1.3  Volume:  0.8  Quantity:  3, Order: 62
+Item id:  461  Location:x = 20| y =  4| z =  0  Weight:  1.3  Volume:  0.8  Quantity:  3, Order: 
 ----------------------------------------------------------------------------------------------------
 
-Item id:  471  Location:x = 19| y = 15| z =  2  Weight:  1.2  Volume: 0.44  Quantity:  1, Order: 62
+Item id:  471  Location:x = 19| y = 15| z =  2  Weight:  1.2  Volume: 0.44  Quantity:  1, Order: 
 ----------------------------------------------------------------------------------------------------
 
-Item id:   85  Location:x =  5| y = 15| z =  2  Weight:  0.6  Volume: 0.68  Quantity:  1, Order: 62
+Item id:   85  Location:x =  5| y = 15| z =  2  Weight:  0.6  Volume: 0.68  Quantity:  1, Order: 
 ----------------------------------------------------------------------------------------------------
 
-Item id:  307  Location:x =  5| y =  4| z =  2  Weight:  1.8  Volume: 0.88  Quantity:  3, Order: 62
+Item id:  307  Location:x =  5| y =  4| z =  2  Weight:  1.8  Volume: 0.88  Quantity:  3, Order: 
 ----------------------------------------------------------------------------------------------------
 
 
@@ -2587,22 +2587,22 @@ Order id: 143
 Order items: 
 
 
-Item id:  282  Location:x = 15| y = 14| z =  0  Weight:  0.5  Volume: 0.81  Quantity:  3, Order: 143
+Item id:  282  Location:x = 15| y = 14| z =  0  Weight:  0.5  Volume: 0.81  Quantity:  3, Order: 
 ----------------------------------------------------------------------------------------------------
 
-Item id:  190  Location:x = 19| y = 13| z =  2  Weight:  0.6  Volume: 0.15  Quantity:  1, Order: 143
+Item id:  190  Location:x = 19| y = 13| z =  2  Weight:  0.6  Volume: 0.15  Quantity:  1, Order: 
 ----------------------------------------------------------------------------------------------------
 
-Item id:  219  Location:x =  5| y =  5| z =  2  Weight:  0.4  Volume:  0.6  Quantity:  1, Order: 143
+Item id:  219  Location:x =  5| y =  5| z =  2  Weight:  0.4  Volume:  0.6  Quantity:  1, Order: 
 ----------------------------------------------------------------------------------------------------
 
-Item id:  163  Location:x = 24| y = 10| z =  1  Weight:  0.8  Volume: 0.59  Quantity:  2, Order: 143
+Item id:  163  Location:x = 24| y = 10| z =  1  Weight:  0.8  Volume: 0.59  Quantity:  2, Order: 
 ----------------------------------------------------------------------------------------------------
 
-Item id:  461  Location:x = 20| y =  4| z =  0  Weight:  1.3  Volume:  0.8  Quantity:  3, Order: 143
+Item id:  461  Location:x = 20| y =  4| z =  0  Weight:  1.3  Volume:  0.8  Quantity:  3, Order: 
 ----------------------------------------------------------------------------------------------------
 
-Item id:   75  Location:x = 15| y =  5| z =  0  Weight:  0.3  Volume: 0.85  Quantity:  1, Order: 143
+Item id:   75  Location:x = 15| y =  5| z =  0  Weight:  0.3  Volume: 0.85  Quantity:  1, Order: 
 ----------------------------------------------------------------------------------------------------
 
 
@@ -3550,19 +3550,19 @@ Order id: 200
 Order items: 
 
 
-Item id:  131  Location:x = 15| y = 13| z =  0  Weight:  0.8  Volume: 0.32  Quantity:  1, Order: 
+Item id:  131  Location:x = 15| y = 13| z =  0  Weight:  0.8  Volume: 0.32  Quantity:  1, Order: 200
 ----------------------------------------------------------------------------------------------------
 
-Item id:  120  Location:x =  4| y = 15| z =  1  Weight:  1.5  Volume: 0.49  Quantity:  3, Order: 
+Item id:  120  Location:x =  4| y = 15| z =  1  Weight:  1.5  Volume: 0.49  Quantity:  3, Order: 200
 ----------------------------------------------------------------------------------------------------
 
-Item id:   77  Location:x = 10| y = 14| z =  2  Weight:  0.3  Volume: 0.67  Quantity:  2, Order: 
+Item id:   77  Location:x = 10| y = 14| z =  2  Weight:  0.3  Volume: 0.67  Quantity:  2, Order: 200
 ----------------------------------------------------------------------------------------------------
 
-Item id:  320  Location:x =  4| y =  6| z =  3  Weight:  1.5  Volume: 0.04  Quantity:  2, Order: 
+Item id:  320  Location:x =  4| y =  6| z =  3  Weight:  1.5  Volume: 0.04  Quantity:  2, Order: 200
 ----------------------------------------------------------------------------------------------------
 
-Item id:  451  Location:x =  9| y = 10| z =  0  Weight:  0.1  Volume: 0.89  Quantity:  2, Order: 
+Item id:  451  Location:x =  9| y = 10| z =  0  Weight:  0.1  Volume: 0.89  Quantity:  2, Order: 200
 ----------------------------------------------------------------------------------------------------
 
 
@@ -3739,22 +3739,22 @@ Order id: 209
 Order items: 
 
 
-Item id:  349  Location:x =  0| y = 13| z =  0  Weight:  1.3  Volume: 0.34  Quantity:  3, Order: 
+Item id:  349  Location:x =  0| y = 13| z =  0  Weight:  1.3  Volume: 0.34  Quantity:  3, Order: 209
 ----------------------------------------------------------------------------------------------------
 
-Item id:   50  Location:x =  5| y = 14| z =  0  Weight:  1.5  Volume: 0.68  Quantity:  1, Order: 
+Item id:   50  Location:x =  5| y = 14| z =  0  Weight:  1.5  Volume: 0.68  Quantity:  1, Order: 209
 ----------------------------------------------------------------------------------------------------
 
-Item id:  428  Location:x = 24| y = 15| z =  0  Weight:  1.6  Volume: 0.38  Quantity:  3, Order: 
+Item id:  428  Location:x = 24| y = 15| z =  0  Weight:  1.6  Volume: 0.38  Quantity:  3, Order: 209
 ----------------------------------------------------------------------------------------------------
 
-Item id:    7  Location:x =  5| y =  4| z =  0  Weight:  1.7  Volume: 0.41  Quantity:  3, Order: 
+Item id:    7  Location:x =  5| y =  4| z =  0  Weight:  1.7  Volume: 0.41  Quantity:  3, Order: 209
 ----------------------------------------------------------------------------------------------------
 
-Item id:  340  Location:x = 15| y = 13| z =  2  Weight:  1.8  Volume: 0.91  Quantity:  3, Order: 
+Item id:  340  Location:x = 15| y = 13| z =  2  Weight:  1.8  Volume: 0.91  Quantity:  3, Order: 209
 ----------------------------------------------------------------------------------------------------
 
-Item id:  297  Location:x = 24| y = 15| z =  2  Weight:  1.9  Volume: 0.14  Quantity:  3, Order: 
+Item id:  297  Location:x = 24| y = 15| z =  2  Weight:  1.9  Volume: 0.14  Quantity:  3, Order: 209
 ----------------------------------------------------------------------------------------------------
 
 
@@ -4096,19 +4096,19 @@ Order id: 231
 Order items: 
 
 
-Item id:   94  Location:x = 19| y = 15| z =  1  Weight:  0.5  Volume: 0.02  Quantity:  1, Order: 231
+Item id:   94  Location:x = 19| y = 15| z =  1  Weight:  0.5  Volume: 0.02  Quantity:  1, Order: 
 ----------------------------------------------------------------------------------------------------
 
-Item id:  441  Location:x = 20| y =  5| z =  0  Weight:  0.9  Volume:  0.1  Quantity:  1, Order: 231
+Item id:  441  Location:x = 20| y =  5| z =  0  Weight:  0.9  Volume:  0.1  Quantity:  1, Order: 
 ----------------------------------------------------------------------------------------------------
 
-Item id:  227  Location:x = 10| y = 14| z =  3  Weight:  1.7  Volume: 0.44  Quantity:  2, Order: 231
+Item id:  227  Location:x = 10| y = 14| z =  3  Weight:  1.7  Volume: 0.44  Quantity:  2, Order: 
 ----------------------------------------------------------------------------------------------------
 
-Item id:   84  Location:x =  5| y = 14| z =  3  Weight:  0.2  Volume: 0.78  Quantity:  1, Order: 231
+Item id:   84  Location:x =  5| y = 14| z =  3  Weight:  0.2  Volume: 0.78  Quantity:  1, Order: 
 ----------------------------------------------------------------------------------------------------
 
-Item id:  215  Location:x = 15| y =  4| z =  2  Weight:  0.6  Volume: 0.43  Quantity:  1, Order: 231
+Item id:  215  Location:x = 15| y =  4| z =  2  Weight:  0.6  Volume: 0.43  Quantity:  1, Order: 
 ----------------------------------------------------------------------------------------------------
 
 
